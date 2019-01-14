@@ -42,3 +42,4 @@ RUN mkdir -p /webrtc
 COPY --from=0 /streamer/publish /webrtc
 WORKDIR /webrtc
 ENTRYPOINT [ "/webrtc/streamer" ]
+CMD [ "-vv" ]

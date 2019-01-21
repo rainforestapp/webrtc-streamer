@@ -53,6 +53,11 @@ void VNCVideoCapturer::onPress(unsigned int code, bool down) {
 	RTC_LOG(LS_VERBOSE) << __PRETTY_FUNCTION__ << "Sending key!!! (" << code << ',' << down << ")";
 	SendKeyEvent(client, code, down);
 }
+void VNCVideoCapturer::onEvent(std::vector<unsigned int> buffer) {
+	RTC_LOG(LS_VERBOSE) << __PRETTY_FUNCTION__ << "Sending buffer!!!";
+	// TODO: convert array of unsigned int => array of char (byte)
+	WriteToRFBServer(client, &buffer, down);
+}
 
 void VNCVideoCapturer::onFrameBufferUpdate() {
 	int i, j;

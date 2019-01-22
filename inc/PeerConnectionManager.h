@@ -173,8 +173,8 @@ class PeerConnectionManager {
 				for (auto &event : events) {
 					int x, y, buttonMask;
 					unsigned int code;
-					std::vector<unsigned int> buffer;
-					bool down, isPress, isEvent, isClick, isEvent;
+					std::string buffer;
+					bool down, isPress, isEvent, isClick;
 					Json::Value bufferValue;
 					if (rtc::GetBoolFromJsonObject(event, "isPress", &isPress) && isPress) {
 						RTC_LOG(LERROR) << "Processing a press!!! - " << code;
@@ -189,33 +189,20 @@ class PeerConnectionManager {
 						continue;
 					}
 
-					if (rtc::GetValueFromJsonObject(event, "buffer", &bufferValue) && rtc::GetUIntFromJsonArray(event, "isEvent", &isEvent) && isEvent) {
+					if (rtc::GetValueFromJsonObject(event, "buffer", &bufferValue) && rtc::GetBoolFromJsonObject(event, "isEvent", &isEvent) && isEvent) {
 						RTC_LOG(LERROR) << "Processing an event!!! - ";
-						rtc::GetUIntFromJsonObject(event, "bufferLength", &buffLength)
-						if (!rtc::JsonArrayToUIntVector(bufferValue, &buffer)) {
-							RTC_LOG(LERROR) << "Can not parse presses - " << msg;
+						if (!rtc::GetStringFromJson(bufferValue, &buffer)) {
+							RTC_LOG(LERROR) << "Can not parse new event presses - " << msg;
 							continue;
 						}
 
-						capturer->onEvent(buffer);
+						std::vector<char> data(buffer.begin(), buffer.end());
+
+						capturer->onEvent(data);
 						continue;
 					}
 
 					if (rtc::GetBoolFromJsonObject(event, "isClick", &isClick) && isClick) {
-						if (!rtc::GetIntFromJsonObject(event, "x", &x)
-							|| !rtc::GetIntFromJsonObject(event, "y", &y)
-							|| !rtc::GetIntFromJsonObject(event, "button", &buttonMask)
-						) {
-							RTC_LOG(LERROR) << "Can not parse clicks!! - " << msg;
-							continue;
-						}
-						RTC_LOG(LERROR) << "Processing a click!!!" << x << ":" << y;
-
-						capturer->onClick(x, y, buttonMask);
-						continue;
-					}
-
-					if (rtc::GetBoolFromJsonObject(event, "isEvent", &isEvent) && isEvent) {
 						if (!rtc::GetIntFromJsonObject(event, "x", &x)
 							|| !rtc::GetIntFromJsonObject(event, "y", &y)
 							|| !rtc::GetIntFromJsonObject(event, "button", &buttonMask)

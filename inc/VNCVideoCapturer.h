@@ -33,7 +33,7 @@ class VNCVideoCapturer : public cricket::VideoCapturer, public rtc::Thread {
 		void onError(std::string error);
 		void onClick(int x, int y, int button);
 		void onPress(unsigned int code, bool down);
-		void onEvent(std::vector<unsigned int> buffer);
+		void onEvent(std::vector<char> buffer);
 	private:
 		std::string uri;
 		Url url;

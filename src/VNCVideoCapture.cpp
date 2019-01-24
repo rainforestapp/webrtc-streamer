@@ -130,9 +130,9 @@ void VNCVideoCapturer::onFrameBufferUpdate() {
 		(uint8_t*)I420buffer->DataU(), I420buffer->StrideU(),
 		(uint8_t*)I420buffer->DataV(), I420buffer->StrideV(),
 		client->width, client->height
-	);				
+	);
 	// RTC_LOG(LS_VERBOSE) << __PRETTY_FUNCTION__ << "Finished Transcoding Frame!!! :D";
-					
+
 	if (conversionResult >= 0) {
 		webrtc::VideoFrame frame(I420buffer, 0, ts, webrtc::kVideoRotation_0);
 		// RTC_LOG(LS_VERBOSE) << __PRETTY_FUNCTION__ << "Sending Frame!!! :D";
@@ -164,7 +164,7 @@ bool VNCVideoCapturer::onStart() {
 		this->onError("Access Denied");
 		return false;
 	}
-	
+
 	if (url.scheme != "vnc") {
 		this->onError("The scheme needs to be vnc:" + url.scheme);
 		return false;

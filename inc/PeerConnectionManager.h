@@ -172,10 +172,9 @@ class PeerConnectionManager {
 
 				for (auto &event : events) {
 					int x, y, buttonMask;
-					unsigned int code;
+					unsigned int code, keysym;
 					std::string buffer;
 					bool down, isPress, isEvent, isClick;
-					Json::Value bufferValue;
 					if (rtc::GetBoolFromJsonObject(event, "isPress", &isPress) && isPress) {
 						RTC_LOG(LERROR) << "Processing a press!!! - " << code;
 						if (!rtc::GetBoolFromJsonObject(event, "down", &down)
@@ -189,16 +188,17 @@ class PeerConnectionManager {
 						continue;
 					}
 
-					if (rtc::GetValueFromJsonObject(event, "buffer", &bufferValue) && rtc::GetBoolFromJsonObject(event, "isEvent", &isEvent) && isEvent) {
-						RTC_LOG(LERROR) << "Processing an event!!! - ";
-						if (!rtc::GetStringFromJson(bufferValue, &buffer)) {
+					if (rtc::GetBoolFromJsonObject(event, "isEvent", &isEvent) && isEvent) {
+						if ( !rtc::GetUIntFromJsonObject(event, "keycode", &code)
+							|| !rtc::GetUIntFromJsonObject(event, "keysym", &keysym)
+							|| !rtc::GetBoolFromJsonObject(event, "down", &down)
+						) {
 							RTC_LOG(LERROR) << "Can not parse new event presses - " << msg;
 							continue;
 						}
 
-						std::vector<char> data(buffer.begin(), buffer.end());
-
-						capturer->onEvent(data);
+						RTC_LOG(LERROR) << "Got back new keyboard event - " << keysym << code << down;
+						capturer->onEvent((unsigned char) keysym, (unsigned char) code, down);
 						continue;
 					}
 

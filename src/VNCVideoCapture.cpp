@@ -16,31 +16,31 @@
 #include "url.h"
 
 static char * get_password (rfbClient *client) {
-  VNCVideoCapturer* that = (VNCVideoCapturer *) rfbClientGetClientData(client, (void *) "this");
-  return that->onGetPassword();
+ 	VNCVideoCapturer* that = (VNCVideoCapturer *) rfbClientGetClientData(client, (void *) "this");
+ 	return that->onGetPassword();
 }
 
 static void get_frame(rfbClient* client) {
-  VNCVideoCapturer* that = (VNCVideoCapturer *) rfbClientGetClientData(client, (void *) "this");
-  return that->onFrameBufferUpdate();
+ 	VNCVideoCapturer* that = (VNCVideoCapturer *) rfbClientGetClientData(client, (void *) "this");
+	return that->onFrameBufferUpdate();
 }
 
 static void signal_handler(int sig) {
-  if (sig == SIGINT) {
-	RTC_LOG(LERROR) << __PRETTY_FUNCTION__ << "Recieved SIGINT, exiting ...";
-	exit(EXIT_FAILURE);
-  }
+	if (sig == SIGINT) {
+		RTC_LOG(LERROR) << __PRETTY_FUNCTION__ << "Recieved SIGINT, exiting ...";
+		exit(EXIT_FAILURE);
+	}
 }
 
 char* VNCVideoCapturer::onGetPassword() {
-  std::cout<< "Starting to get PASSWORD!!!" << std::endl;
+	std::cout<< "Starting to get PASSWORD!!!" << std::endl;
 	if (!url.password.length()) {
 		if (getenv("VNCPASS") != NULL) {
 			return strdup(getenv("VNCPASS"));
 		}
 	}
 
-  return strdup((char* )url.password.c_str());
+	return strdup((char* )url.password.c_str());
 }
 
 void VNCVideoCapturer::onClick(int x, int y, int buttonMask) {
@@ -52,6 +52,40 @@ void VNCVideoCapturer::onClick(int x, int y, int buttonMask) {
 void VNCVideoCapturer::onPress(unsigned int code, bool down) {
 	RTC_LOG(LS_VERBOSE) << __PRETTY_FUNCTION__ << "Sending key!!! (" << code << ',' << down << ")";
 	SendKeyEvent(client, code, down);
+}
+
+unsigned char getRFBkeycode(unsigned char keycode) {
+	unsigned char upperByte = (keycode >> 8);
+	unsigned char lowerByte = (keycode & 0x00ff);
+	if (upperByte == 0xe0 && lowerByte < 0x7f) {
+			lowerByte = lowerByte | 0x80;
+			return lowerByte;
+	}
+	return keycode;
+}
+
+void VNCVideoCapturer::onEvent(unsigned char keysym, unsigned char keycode, bool down) {
+	std::vector<char> buff;
+
+	buff.push_back(255); // msg-type
+	buff.push_back(0); // sub msg-type
+
+	buff.push_back((down >> 8));
+	buff.push_back(down);
+
+	buff.push_back((keysym >> 24));
+	buff.push_back((keysym >> 16));
+	buff.push_back((keysym >> 8));
+	buff.push_back(keysym);
+
+	unsigned char RFBkeycode = getRFBkeycode(keycode);
+
+	buff.push_back((RFBkeycode >> 24));
+	buff.push_back((RFBkeycode >> 16));
+	buff.push_back((RFBkeycode >> 8));
+	buff.push_back(RFBkeycode);
+	RTC_LOG(LS_VERBOSE) << __PRETTY_FUNCTION__ << "Sending buffer!!!";
+	WriteToRFBServer(client, &buff[0], buff.size());
 }
 
 void VNCVideoCapturer::onFrameBufferUpdate() {
@@ -96,9 +130,9 @@ void VNCVideoCapturer::onFrameBufferUpdate() {
 		(uint8_t*)I420buffer->DataU(), I420buffer->StrideU(),
 		(uint8_t*)I420buffer->DataV(), I420buffer->StrideV(),
 		client->width, client->height
-	);				
+	);
 	// RTC_LOG(LS_VERBOSE) << __PRETTY_FUNCTION__ << "Finished Transcoding Frame!!! :D";
-					
+
 	if (conversionResult >= 0) {
 		webrtc::VideoFrame frame(I420buffer, 0, ts, webrtc::kVideoRotation_0);
 		// RTC_LOG(LS_VERBOSE) << __PRETTY_FUNCTION__ << "Sending Frame!!! :D";
@@ -130,7 +164,7 @@ bool VNCVideoCapturer::onStart() {
 		this->onError("Access Denied");
 		return false;
 	}
-	
+
 	if (url.scheme != "vnc") {
 		this->onError("The scheme needs to be vnc:" + url.scheme);
 		return false;
